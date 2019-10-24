@@ -23,16 +23,19 @@ router.get('/', function(req, res, next) {
     offset = req.query.offset;
   }
 
-  if( typeof req.query.tag !== 'undefined' ){
-    query.tagList = {"$in" : [req.query.tag]};
-  }
+  // if( typeof req.query.tag !== 'undefined' ){
+  //   query.tagList = {"$in" : [req.query.tag]};
+  // }
   
   let filter = ''
   if( typeof req.query.filter !== 'undefined' ){
-     filter = JSON.parse(req.query.filter);
-     if ( typeof filter._id !== 'undefined') {
-       query._id = {"_id" : new ObjectId(filter._id)};
-     }
+    filter = JSON.parse(req.query.filter);
+    if ( typeof filter._id !== 'undefined') {
+      query._id = {"_id" : new ObjectId(filter._id)};
+    }
+    if( typeof filter.tag !== 'undefined' ){
+      query.tagList = {"$in" : [filter.tag]};
+    }
   }
 
   Promise.all([
