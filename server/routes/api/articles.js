@@ -58,7 +58,7 @@ router.get('/', function(req, res, next) {
       Article.find(query)
         .limit(Number(limit))
         .skip(Number(offset))
-        .sort({'createdAt': 1})
+        .sort({'createdAt': -1})
         .populate('author')
         .exec(),
       Article.count(query).exec(),
@@ -78,131 +78,16 @@ router.get('/', function(req, res, next) {
   }).catch(next);
 });
 
-// router.get('/', async(req, res) => {
-//   const objCollection = await loadArticleCollection();
-//   const articles = objCollection.collection
-//   const dbCollection = objCollection.client
-//   let filter = {}
-//   if(typeof req.query.filter !== 'undefined') {
-//     filter = JSON.parse(req.query.filter)
-//     if(typeof filter._id !== 'undefined') {
-//      filter = {_id: new mongodb.ObjectID(filter._id)}
-//     }
-//   }
-//   const response = await articles.find(filter).sort({ 'createdAt': -1 }).toArray()
-//   const objUser =  await loadUsersCollection()
-//   const profiles = objUser.collection
-//   const dbUsers = objUser.client
-
-//     const objFollow = await loadFollow()
-//     const followDetails = objFollow.collection
-//     const dbFollow = objFollow.client
-  
-//     let author = []
-//     let newData = {}
-//     let arrResp=[]
- 
-//     for (let index = 0; index < response.length; index++) {
-      
-//       newData = {}
-//       author = await profiles.findOne({_id: new mongodb.ObjectID(response[index].author_id)})
-//       const followRelay = await followDetails.findOne(
-//       { follower_id:'5d99ac291c9d440000a96ee2', followed_id:response[index].author_id })
-//       delete author['password'];
-//       author = { ...author, follow: false }
-//       if (followRelay !== null){
-//         author = { ...author, follow: true }
-//       } 
-//       newData = { ...response[index], author }
-//       arrResp.push(newData)
-//       if (index === response.length-1) {
-//         if(arrResp.length===1 && typeof filter._id !== 'undefined') {
-//           arrResp = arrResp[0]
-//         }
-//         res.send(arrResp);
-//         dbCollection.close()
-//         dbUsers.close()
-//         dbFollow.close()
-//       }
-//     }
-// });
-
-// router.get('/', async(req, res) => {
-//   const objCollection = await loadArticleCollection();
-//   const articles = objCollection.collection
-//   const dbCollection = objCollection.client
-//   let filter = {}
-//   if(typeof req.query.filter !== 'undefined') {
-//     filter = JSON.parse(req.query.filter)
-//     if(typeof filter._id !== 'undefined') {
-//      filter = {_id: new mongodb.ObjectID(filter._id)}
-//     }
-//   }
-//   let response = await articles.find(filter).sort({ 'createdAt': -1 }).toArray()
-//   if(response.length===1 && typeof filter._id !== 'undefined') {
-//     response = response[0]
-//   }
-//   res.send(response);
-//   dbCollection.close()
-// })
-// POST
-// router.post('/', async(req, res) => {
-//   const objCollection = await loadArticleCollection();
-//   const articles = objCollection.collection
-//   const dbCollection = objCollection.client
-//   let newArt = {
-//     title:req.body.newArt.title,
-//     description:req.body.newArt.description,
-//     body:req.body.newArt.body,
-//     tagList:req.body.newArt.tagList,
-//     author_id:req.body.newArt.author_id,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     favorited: false,
-//     favoritesCount: 0
-//   }
-//    await articles.insertOne(newArt).then(result => {
-//      newArt = {...newArt, _id:result.insertedId }
-//       res.send(newArt)
-//       dbCollection.close()
-//     })
-//    res.status(201).send();
-// });
-
 router.post('/', function(req, res, next) {
   User.findById(req.body.newArt.author_id).then(function(user){
     if (!user) { return res.sendStatus(401); }
-
-    var article = new Article(req.body.newArt);
-
+    let data = {...req.body.newArt, createdAt: new Date(), updatedAt: new Date()}
+    let article = new Article(data);
     article.author = user;
-    console.log("TCL: article", article)
-
     return article.save().then(function(){
-      console.log(article.author);
       return res.json({article: article.toJSONFor(user)});
     });
   }).catch(next);
 });
 
-async function loadArticleCollection() {
-  const client = await mongodb.MongoClient.connect('mongodb+srv://admin:6FAqp2Iz7bS6nqIk@cluster0-yha6u.mongodb.net/admin?retryWrites=true&w=majority', 
-  {useNewUrlParser:true, useUnifiedTopology: true });
-  const collection = client.db('ex-articles').collection('articles');
-  return { collection, client };
-}
-
-async function loadFollow() {
-  const client = await mongodb.MongoClient.connect('mongodb+srv://admin:6FAqp2Iz7bS6nqIk@cluster0-yha6u.mongodb.net/admin?retryWrites=true&w=majority', 
-  {useNewUrlParser:true, useUnifiedTopology: true });
-  const collection = client.db('ex-articles').collection('follow');
-  return { collection, client };
-}
-
-async function loadUsersCollection() {
-  const client = await mongodb.MongoClient.connect('mongodb+srv://admin:6FAqp2Iz7bS6nqIk@cluster0-yha6u.mongodb.net/admin?retryWrites=true&w=majority', 
-  {useNewUrlParser:true, useUnifiedTopology: true });
-  const collection = client.db('ex-articles').collection('users');
-  return { collection, client };
-}
 module.exports = router;
