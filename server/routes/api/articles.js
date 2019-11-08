@@ -1,13 +1,35 @@
 const express = require('express')
 const mongodb = require('mongodb')
-
-
 const mongoose = require('mongoose');
 var ObjectId = require('mongodb').ObjectId;
 
 const router = express.Router();
 const User = mongoose.model('User');
 const Article = mongoose.model('Article');
+const Comment = mongoose.model('Comment');
+
+// Preload article objects on routes with ':article'
+router.param('article', function(req, res, next, articleId) {
+  Article.findOne({ _id: new ObjectId(articleId)})
+    .populate('author')
+    .then(function (article) {
+      if (!article) { return res.sendStatus(404); }
+
+      req.article = article;
+
+      return next();
+    }).catch(next);
+});
+
+router.param('comment', function(req, res, next, id) {
+  Comment.findById(id).then(function(comment){
+    if(!comment) { return res.sendStatus(404); }
+
+    req.comment = comment;
+
+    return next();
+  }).catch(next);
+});
 
 // GET
 router.get('/', function(req, res, next) {
@@ -88,6 +110,50 @@ router.post('/', function(req, res, next) {
       return res.json({article: article.toJSONFor(user)});
     });
   }).catch(next);
+});
+
+// return an article's comments
+router.get('/:article/comments', function(req, res, next){
+  Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user){
+    return req.article.populate({
+      path: 'comments',
+      populate: {
+        path: 'author'
+      },
+      options: {
+        sort: {
+          createdAt: -1
+        }
+      }
+    }).execPopulate().then(function(article) {
+      return res.json({comments: req.article.comments.map(function(comment){
+        return comment.toJSONFor(user);
+      })});
+    });
+  }).catch(next);
+});
+
+// create a new comment
+router.post('/:article/comments', function(req, res, next) {
+      let data = req.body;
+  User.findById(data.newCom.author_id).then(function(user){
+    if(!user){ return res.sendStatus(401); }
+data.newCom = {...data.newCom, createdAt: new Date() }
+    var comment = new Comment(data.newCom);
+    
+    comment.article = req.article;
+    comment.author = user;
+    console.log("TCL: comment", comment)
+
+    return comment.save().then(function(){
+      req.article.comments.push(comment);
+
+      return req.article.save().then(function(article) {
+        res.json(comment.toJSONFor(user));
+      });
+    });
+  }).catch(next);
+  
 });
 
 module.exports = router;
