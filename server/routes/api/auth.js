@@ -10,10 +10,10 @@ router.get('/', async(req, res) => {
   const dbUsers = objUsers.client
   
   let param = JSON.parse(req.query.user)
-  user = await users.find({email: param.email, password:param.password }).toArray()
-  user = user[0]
-   res.send(user);
-   dbUsers.close();
+    user = await users.find({email: param.email, password:param.password }).toArray()
+    user = user[0]
+    res.send(user);
+  dbUsers.close();
 })
 
 router.post('/', async(req, res) => {

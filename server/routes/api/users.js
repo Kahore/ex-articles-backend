@@ -4,6 +4,15 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 
+// Preload user profile on routes with ':userid'
+router.param('userid', function(req, res, next, userid){
+  User.findById(userid).then(function(user){
+    if (!user) { return res.sendStatus(404); }
+    req.profile = user;
+    return next();
+  }).catch(next);
+});
+
 // GET user profile
 router.get('/', function(req, res, next){
   if(req.query){
@@ -39,6 +48,29 @@ router.put('/', async (req, res)=>{
   })
   res.status(200).send();
 })
+
+router.post('/:userid/follow', function(req, res, next){
+  var profileId = req.profile._id;
+  User.findById(req.body.id).then(function(user){
+
+    if (!user) { return res.sendStatus(401); }
+
+    return user.follow(profileId).then(function(){
+      return res.json(user);
+    });
+  }).catch(next);
+});
+
+router.delete('/:userid/follow', function(req, res, next){
+  var profileId = req.profile._id;
+  User.findById(req.query.id).then(function(user){
+    if (!user) { return res.sendStatus(401); }
+
+    return user.unfollow(profileId).then(function(){
+      return res.json(user);
+    });
+  }).catch(next);
+});
 
 async function loadUsersCollection() {
   const client = await mongodb.MongoClient.connect('mongodb+srv://admin:6FAqp2Iz7bS6nqIk@cluster0-yha6u.mongodb.net/admin?retryWrites=true&w=majority', 
