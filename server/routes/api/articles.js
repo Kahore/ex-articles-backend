@@ -135,15 +135,14 @@ router.get('/:article/comments', function(req, res, next){
 
 // create a new comment
 router.post('/:article/comments', function(req, res, next) {
-      let data = req.body;
+  let data = req.body;
   User.findById(data.newCom.author_id).then(function(user){
     if(!user){ return res.sendStatus(401); }
-data.newCom = {...data.newCom, createdAt: new Date() }
+    data.newCom = {...data.newCom, createdAt: new Date() }
     var comment = new Comment(data.newCom);
     
     comment.article = req.article;
     comment.author = user;
-    console.log("TCL: comment", comment)
 
     return comment.save().then(function(){
       req.article.comments.push(comment);
@@ -154,6 +153,35 @@ data.newCom = {...data.newCom, createdAt: new Date() }
     });
   }).catch(next);
   
+});
+
+// Favorite an article
+router.post('/:article/favorite', function(req, res, next) {
+  let articleId = req.article._id;
+  User.findById(req.body.id).then(function(user){
+    if (!user) { return res.sendStatus(401); }
+
+    return user.favorite(articleId).then(function(){
+      return req.article.updateFavoriteCount().then(function(){
+        return res.json(user);
+      });
+    });
+  }).catch(next);
+});
+
+// Unfavorite an article
+router.delete('/:article/favorite', function(req, res, next) {
+  let articleId = req.article._id;
+
+  User.findById(req.query.id).then(function (user){
+    if (!user) { return res.sendStatus(401); }
+
+    return user.unfavorite(articleId).then(function(){
+      return req.article.updateFavoriteCount().then(function(){
+        return res.json(user);
+      });
+    });
+  }).catch(next);
 });
 
 module.exports = router;

@@ -13,8 +13,16 @@ const ArticleSchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
+ArticleSchema.methods.updateFavoriteCount = function() {
+  var article = this;
+
+  return User.count({favorites: {$in: [article._id]}}).then(function(count){
+    article.favoritesCount = count;
+    return article.save();
+  });
+};
+
 ArticleSchema.methods.toJSONFor = function(user){
-  //console.log("TCL: ArticleSchema.methods.toJSONFor -> user", this.author)
   return {
     _id: this._id,
     title: this.title,
@@ -23,8 +31,7 @@ ArticleSchema.methods.toJSONFor = function(user){
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
     tagList: this.tagList,
-    //favorited: user ? User.isFavorite(this._id) : false,
-    favorited: false,
+    favorited: user ? user.isFavorite(this._id) : false,
     favoritesCount: this.favoritesCount,
     author: this.author.toProfileJSONFor(user)
   };
