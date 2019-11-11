@@ -45,10 +45,6 @@ router.get('/', function(req, res, next) {
     offset = req.query.offset;
   }
 
-  // if( typeof req.query.tag !== 'undefined' ){
-  //   query.tagList = {"$in" : [req.query.tag]};
-  // }
-  
   let filter = ''
   if( typeof req.query.filter !== 'undefined' ){
     filter = JSON.parse(req.query.filter);
@@ -59,13 +55,14 @@ router.get('/', function(req, res, next) {
       query.tagList = {"$in" : [filter.tag]};
     }
   }
-
   Promise.all([
     filter !== '' ? User.findOne({_id: filter.author_id}) : null,
-    req.query.favorited ? User.findOne({username: req.query.favorited}) : null
+    // filter.favorited !== '' ? User.findOne({username: filter.favorited}) : null
+    User.findById(filter.favorited)
+
   ]).then(function(results){
-    var author = results[0];
-    var favoriter = results[1];
+    let author = results[0];
+    let favoriter = results[1];
 
     if(author){
       query.author = author._id;
