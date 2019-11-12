@@ -109,6 +109,35 @@ router.post('/', function(req, res, next) {
   }).catch(next);
 });
 
+// update article
+router.put('/:article', function(req, res, next) {
+  User.findById(req.body.articleInfo.author_id).then(function(user){
+    if(req.article.author._id.toString() === req.body.articleInfo.author_id.toString()){
+      if(typeof req.body.articleInfo.title !== 'undefined'){
+        req.article.title = req.body.articleInfo.title;
+      }
+
+      if(typeof req.body.articleInfo.description !== 'undefined'){
+        req.article.description = req.body.articleInfo.description;
+      }
+
+      if(typeof req.body.articleInfo.body !== 'undefined'){
+        req.article.body = req.body.articleInfo.body;
+      }
+
+      if(typeof req.body.articleInfo.tagList !== 'undefined'){
+        req.article.tagList = req.body.articleInfo.tagList
+      }
+
+      req.article.save().then(function(article){
+        return res.json({article: article.toJSONFor(user)});
+      }).catch(next);
+    } else {
+      return res.sendStatus(403);
+    }
+  });
+});
+
 // return an article's comments
 router.get('/:article/comments', function(req, res, next){
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user){
