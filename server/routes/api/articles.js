@@ -138,6 +138,21 @@ router.put('/:article', function(req, res, next) {
   });
 });
 
+// delete article
+router.delete('/:article', function(req, res, next) {
+  User.findById(req.query.id).then(function(user){
+    if (!user) { return res.sendStatus(401); }
+
+    if(req.article.author._id.toString() === req.query.id.toString()){
+      return req.article.remove().then(function(){
+        return res.sendStatus(204);
+      });
+    } else {
+      return res.sendStatus(403);
+    }
+  }).catch(next);
+});
+
 // return an article's comments
 router.get('/:article/comments', function(req, res, next){
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user){
