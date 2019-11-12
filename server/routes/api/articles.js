@@ -54,7 +54,15 @@ router.get('/', function(req, res, next) {
     if( typeof filter.tag !== 'undefined' ){
       query.tagList = {"$in" : [filter.tag]};
     }
+    if( typeof filter.userFeed !== 'undefined' ){
+    User.findOne({_id: filter.userFeed}).then(function(user){
+      // MEMO: adding requested user Id to list of following get personal feed
+      let authorList = [...user.following, filter.userFeed ];
+      query.author = {$in: authorList};
+    })
+    }
   }
+
   Promise.all([
     filter !== '' ? User.findOne({_id: filter.author_id}) : null,
     // filter.favorited !== '' ? User.findOne({username: filter.favorited}) : null
@@ -73,8 +81,10 @@ router.get('/', function(req, res, next) {
     } else if(req.query.favorited){
       query._id = {$in: []};
     }
+
     return Promise.all([
       Article.find(query)
+      
         .limit(Number(limit))
         .skip(Number(offset))
         .sort({'createdAt': -1})

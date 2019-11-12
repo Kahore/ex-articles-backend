@@ -39,7 +39,9 @@ router.put('/', async (req, res)=>{
         email : req.body.user.email,
         username: req.body.user.username,
         bio: req.body.user.bio,
-        image: req.body.user.image
+        image: req.body.user.image,
+        favorites: [],
+        following: []
       }
     }
   ).then(()=>{
