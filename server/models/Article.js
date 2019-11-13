@@ -1,28 +1,30 @@
-const mongoose = require('mongoose');
-const User = mongoose.model('User');
+const mongoose = require("mongoose");
+const User = mongoose.model("User");
 
 const ArticleSchema = new mongoose.Schema({
   title: String,
   description: String,
   body: String,
-  favoritesCount: {type: Number, default: 0},
+  favoritesCount: { type: Number, default: 0 },
   createdAt: Date,
   updatedAt: Date,
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
   tagList: [{ type: String }],
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  author: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
 });
 
 ArticleSchema.methods.updateFavoriteCount = function() {
-  var article = this;
+  let article = this;
 
-  return User.count({favorites: {$in: [article._id]}}).then(function(count){
+  return User.count({ favorites: { $in: [article._id] } }).then(function(
+    count
+  ) {
     article.favoritesCount = count;
     return article.save();
   });
 };
 
-ArticleSchema.methods.toJSONFor = function(user){
+ArticleSchema.methods.toJSONFor = function(user) {
   return {
     _id: this._id,
     title: this.title,
@@ -37,4 +39,4 @@ ArticleSchema.methods.toJSONFor = function(user){
   };
 };
 
-mongoose.model('Article', ArticleSchema);
+mongoose.model("Article", ArticleSchema);
